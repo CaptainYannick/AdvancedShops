@@ -22,6 +22,7 @@ public class ShopHologram {
             floatingItem.setGravity(false);
             floatingItem.setCanMobPickup(false);
             floatingItem.setPickupDelay(Integer.MAX_VALUE);
+            floatingItem.setUnlimitedLifetime(true);
             floatingItem.setCustomNameVisible(false);
             floatingItem.setVelocity(new org.bukkit.util.Vector(0, 0, 0));
             floatingItem.setCanPlayerPickup(false);

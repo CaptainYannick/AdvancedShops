@@ -1,9 +1,6 @@
 package io.captainyannick.advancedShops;
 
-import io.captainyannick.advancedShops.command.CreateCommand;
-import io.captainyannick.advancedShops.command.ManagerCommand;
-import io.captainyannick.advancedShops.command.ReloadCommand;
-import io.captainyannick.advancedShops.command.ShopCommand;
+import io.captainyannick.advancedShops.command.*;
 import io.captainyannick.advancedShops.core.Metrics;
 import io.captainyannick.advancedShops.core.command.CommandManager;
 import io.captainyannick.advancedShops.core.config.Config;
@@ -39,7 +36,8 @@ public class AdvancedShops extends JavaPlugin {
         this.commandManager.setMainCommand(new ShopCommand(this))
                 .addSubCommand(new CreateCommand(this))
                 .addSubCommand(new ReloadCommand(this))
-                .addSubCommand(new ManagerCommand(this));
+                .addSubCommand(new ManagerCommand(this))
+                .addSubCommand(new LogsCommand(this));
         this.updateConfigs();
         ShopManager.initialize(this);
 

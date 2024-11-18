@@ -74,11 +74,4 @@ public class ShopListener implements Listener {
             }
         }
     }
-
-    @EventHandler
-    public void onEntityDespawn(ItemDespawnEvent event) {
-        for (Shop shop : ShopManager.getAllShops()) {
-            ShopHologram.updateFloatingItem(shop);
-        }
-    }
 }

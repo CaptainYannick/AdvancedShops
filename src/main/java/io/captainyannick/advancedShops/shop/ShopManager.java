@@ -230,8 +230,6 @@ public class ShopManager {
         }
 
         economy.depositPlayer(player, price);
-
-        // Remove item from player
         player.getInventory().removeItem(itemToSell);
 
         if (!shop.isAdminShop()) {

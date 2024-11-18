@@ -184,9 +184,9 @@ public class ShopManager {
         ItemMeta sellMeta = sellItem.getItemMeta();
         sellMeta.setDisplayName(ChatColor.RED + "Sell Item");
         if (shop.getSellPrice() > 0){
-            buyMeta.setLore(Arrays.asList(ChatColor.YELLOW + "Price: " + shop.getSellPrice()));
+            sellMeta.setLore(Arrays.asList(ChatColor.YELLOW + "Price: " + shop.getSellPrice()));
         } else {
-            buyMeta.setLore(Arrays.asList(ChatColor.RED + "Selling disabled"));
+            sellMeta.setLore(Arrays.asList(ChatColor.RED + "Selling disabled"));
         }
         sellItem.setItemMeta(sellMeta);
         gui.setItem(15, sellItem);

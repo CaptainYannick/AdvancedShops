@@ -80,16 +80,24 @@ public class GUIListener implements Listener {
 
         switch (event.getRawSlot()) {
             case 11:
-                if (AdvancedShops.getEconomy().getBalance(player) > shop.getBuyPrice()) {
-                    startChatPrompt(player, shop, "buy");
-                    inventory.close();
+                if(shop.getBuyPrice() > 0) {
+                    if (AdvancedShops.getEconomy().getBalance(player) > shop.getBuyPrice()) {
+                        startChatPrompt(player, shop, "buy");
+                        inventory.close();
+                    } else {
+                        FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("not_enough_money"), player);
+                    }
                 } else {
-                    FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("not_enough_money"), player);
+                    FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("shop_buy_disabled"), player);
                 }
                 break;
             case 15:
-                startChatPrompt(player, shop, "sell");
-                inventory.close();
+                if (shop.getSellPrice() > 0) {
+                    startChatPrompt(player, shop, "sell");
+                    inventory.close();
+                } else {
+                    FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("shop_sell_disabled"), player);
+                }
                 break;
         }
     }

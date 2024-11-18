@@ -36,8 +36,7 @@ public class AdvancedShops extends JavaPlugin {
         this.commandManager.setMainCommand(new ShopCommand(this))
                 .addSubCommand(new CreateCommand(this))
                 .addSubCommand(new ReloadCommand(this))
-                .addSubCommand(new ManagerCommand(this))
-                .addSubCommand(new LogsCommand(this));
+                .addSubCommand(new ManagerCommand(this));
         this.updateConfigs();
         ShopManager.initialize(this);
 

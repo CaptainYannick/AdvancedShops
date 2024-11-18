@@ -1,6 +1,7 @@
 package io.captainyannick.advancedShops.listeners;
 
 import io.captainyannick.advancedShops.AdvancedShops;
+import io.captainyannick.advancedShops.core.utils.FormatUtils;
 import io.captainyannick.advancedShops.shop.PriceAdjustment;
 import io.captainyannick.advancedShops.shop.Shop;
 import io.captainyannick.advancedShops.shop.ShopManager;
@@ -88,7 +89,7 @@ public class GUIListener implements Listener {
 
         Shop shop = ShopManager.getActiveShopSession(player);
 
-        if (shop == null || !shop.getOwner().equals(player.getUniqueId())) {
+        if (shop == null || !shop.getOwner().equals(player.getUniqueId()) || shop.getManagers().contains(player.getUniqueId())) {
             player.sendMessage(ChatColor.RED + "You do not have permission to manage this shop.");
             return;
         }
@@ -111,7 +112,11 @@ public class GUIListener implements Listener {
                 manageStock(player, shop);
                 break;
             case 26: // Delete Shop
-                confirmOrDeleteShop(player, shop, event.getCurrentItem());
+                if (shop.getOwner().equals(player.getUniqueId())) {
+                    confirmOrDeleteShop(player, shop, event.getCurrentItem());
+                } else {
+                    FormatUtils.sendPrefixedMessage("only_owner_can_delete", player);
+                }
                 break;
         }
     }

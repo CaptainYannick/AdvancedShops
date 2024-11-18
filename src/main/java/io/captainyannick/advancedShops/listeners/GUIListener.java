@@ -80,8 +80,12 @@ public class GUIListener implements Listener {
 
         switch (event.getRawSlot()) {
             case 11:
-                startChatPrompt(player, shop, "buy");
-                inventory.close();
+                if (AdvancedShops.getEconomy().getBalance(player) > shop.getBuyPrice()) {
+                    startChatPrompt(player, shop, "buy");
+                    inventory.close();
+                } else {
+                    FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("not_enough_money"), player);
+                }
                 break;
             case 15:
                 startChatPrompt(player, shop, "sell");
@@ -309,6 +313,7 @@ public class GUIListener implements Listener {
     private void performBuy(Player player, Shop shop, int amount) {
         double totalPrice = amount * shop.getBuyPrice();
         if (AdvancedShops.getEconomy().withdrawPlayer(player, totalPrice).transactionSuccess()) {
+            AdvancedShops.getEconomy().depositPlayer(Bukkit.getOfflinePlayer(shop.getOwner()), totalPrice);
             shop.reduceStock(amount);
             addItemToInventory(player, shop.getItem(), amount);
             player.sendMessage(ChatColor.GREEN + "You bought " + amount + " " + TextUtils.formatItemName(shop.getItem()) + " for " + totalPrice + "!");
@@ -328,18 +333,22 @@ public class GUIListener implements Listener {
 
     private void performSell(Player player, Shop shop, int amount) {
         double totalPrice = amount * shop.getSellPrice();
-        shop.addStock(amount);
-        removeItemsFromInventory(player, shop.getItem(), amount);
-        AdvancedShops.getEconomy().depositPlayer(player, totalPrice);
-        player.sendMessage(ChatColor.GREEN + "You sold " + amount + " " + TextUtils.formatItemName(shop.getItem()) + " for " + totalPrice + "!");
-        ShopManager.updateShop(shop);
-        Player owner = (Player) Bukkit.getOfflinePlayer(shop.getOwner());
-        if (owner.isOnline()) {
-            FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("sell_notification")
-                    .replaceAll("%player%", player.getName())
-                    .replaceAll("%amount%", String.valueOf(amount))
-                    .replaceAll("%item%", TextUtils.formatItemName(shop.getItem()))
-                    .replaceAll("%money%", String.valueOf(totalPrice)), owner);
+        if (AdvancedShops.getEconomy().getBalance(Bukkit.getOfflinePlayer(shop.getOwner())) > totalPrice) {
+            shop.addStock(amount);
+            removeItemsFromInventory(player, shop.getItem(), amount);
+            AdvancedShops.getEconomy().depositPlayer(player, totalPrice);
+            player.sendMessage(ChatColor.GREEN + "You sold " + amount + " " + TextUtils.formatItemName(shop.getItem()) + " for " + totalPrice + "!");
+            ShopManager.updateShop(shop);
+            Player owner = (Player) Bukkit.getOfflinePlayer(shop.getOwner());
+            if (owner.isOnline()) {
+                FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("sell_notification")
+                        .replaceAll("%player%", player.getName())
+                        .replaceAll("%amount%", String.valueOf(amount))
+                        .replaceAll("%item%", TextUtils.formatItemName(shop.getItem()))
+                        .replaceAll("%money%", String.valueOf(totalPrice)), owner);
+            }
+        } else {
+            player.sendMessage(ChatColor.RED + "Transaction failed. Shop owner does not have enough money.");
         }
     }
 

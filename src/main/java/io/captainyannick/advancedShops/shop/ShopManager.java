@@ -130,11 +130,13 @@ public class ShopManager {
     public static void deleteShop(Shop shop) {
         Bukkit.getScheduler().runTaskLater(AdvancedShops.getInstance(), () -> {
             ShopHologram.removeFloatingItem(shop);
+            ItemStack shopItem = shop.getItem().clone();
+            shopItem.setAmount(shop.getStock());
+            shop.getLocation().getWorld().dropItem(shop.getLocation(),shopItem);
             shops.remove(shop.getLocation());
             removeShopFromFile(shop);
             ShopSign.removeShopSign(shop);
 
-            // Optionally notify the shop owner (if online)
             Player owner = Bukkit.getPlayer(shop.getOwner());
             if (owner != null && owner.isOnline()) {
                 owner.sendMessage(ChatColor.GREEN + "Your shop has been successfully deleted.");

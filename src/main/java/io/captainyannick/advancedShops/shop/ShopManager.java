@@ -155,104 +155,8 @@ public class ShopManager {
         ShopSign.updateShopSign(shop.getSignLocation().getBlock(), shop);
     }
 
-    public static void buyFromShop(Player player, Shop shop) {
-        if (!shop.isEnabled()) {
-            player.sendMessage(ChatColor.RED + "This shop is currently disabled.");
-            return;
-        }
-
-        if (!shop.isAdminShop() && shop.getStock() <= 0) {
-            player.sendMessage(ChatColor.RED + "This shop is out of stock.");
-            return;
-        }
-
-        double price = shop.getBuyPrice();
-
-        Economy economy = AdvancedShops.getEconomy();
-
-        if (!economy.has(player, price)) {
-            player.sendMessage(ChatColor.RED + "You do not have enough money to buy this item.");
-            return;
-        }
-
-        economy.withdrawPlayer(player, price);
-
-        if (!shop.isAdminShop()) {
-            economy.depositPlayer(Bukkit.getOfflinePlayer(shop.getOwner()), price);
-            shop.setStock(shop.getStock() - 1);
-
-            if (shop.getStock() <= plugin.getMainConfig().getInt("notifications.low_stock_threshold")) {
-                Player owner = Bukkit.getPlayer(shop.getOwner());
-                if (owner != null && owner.isOnline()) {
-                    owner.sendMessage(ChatColor.YELLOW + "Your shop for " + shop.getItem().getType() + " is running low on stock.");
-                }
-            }
-
-            if (shop.getStock() <= 0) {
-                shop.setEnabled(false);
-                Player owner = Bukkit.getPlayer(shop.getOwner());
-                if (owner != null && owner.isOnline() && plugin.getMainConfig().getBoolean("notifications.stock_disabled")) {
-                    owner.sendMessage(ChatColor.RED + "Your shop for " + shop.getItem().getType() + " has been disabled due to lack of stock.");
-                }
-            }
-        }
-
-        player.getInventory().addItem(shop.getItem());
-
-        player.sendMessage(ChatColor.GREEN + "You bought 1 " + shop.getItem().getType() + " for " + price + ".");
-
-        logTransaction(shop, player.getUniqueId(), "BUY", 1, price);
-    }
-
-    public static void sellToShop(Player player, Shop shop) {
-        if (!shop.isEnabled()) {
-            player.sendMessage(ChatColor.RED + "This shop is currently disabled.");
-            return;
-        }
-
-        ItemStack itemToSell = shop.getItem().clone();
-        if (!player.getInventory().containsAtLeast(itemToSell, 1)) {
-            player.sendMessage(ChatColor.RED + "You do not have the required item to sell.");
-            return;
-        }
-
-        double price = shop.getSellPrice();
-
-        Economy economy = AdvancedShops.getEconomy();
-
-        if (!shop.isAdminShop()) {
-            // Withdraw money from shop owner
-            if (!economy.has(Bukkit.getOfflinePlayer(shop.getOwner()), price)) {
-                player.sendMessage(ChatColor.RED + "Shop owner does not have enough money to buy your item.");
-                return;
-            }
-            economy.withdrawPlayer(Bukkit.getOfflinePlayer(shop.getOwner()), price);
-        }
-
-        economy.depositPlayer(player, price);
-        player.getInventory().removeItem(itemToSell);
-
-        if (!shop.isAdminShop()) {
-            shop.setStock(shop.getStock() + 1);
-        }
-
-        player.sendMessage(ChatColor.GREEN + "You sold 1 " + shop.getItem().getType() + " for " + price + ".");
-
-        // Log transaction
-        logTransaction(shop, player.getUniqueId(), "SELL", 1, price);
-    }
-
     private static int getShopCount(UUID owner) {
         return (int) shops.values().stream().filter(shop -> shop.getOwner().equals(owner)).count();
-    }
-
-    private static int getMaxShopsForPlayer(Player player) {
-        for (int i = 1; i <= 100; i++) {
-            if (player.hasPermission("advancedshops.max." + i)) {
-                return i;
-            }
-        }
-        return plugin.getMainConfig().getInt("limits.default_max_shops", 3);
     }
 
     public static Shop getShopAtLocation(Location location) {
@@ -291,7 +195,7 @@ public class ShopManager {
     }
 
     public static void openManagementGUI(Player player, Shop shop) {
-        Inventory gui = Bukkit.createInventory(null, 27, ChatColor.BLUE + "Manage Shop");
+        Inventory gui = Bukkit.createInventory(null, 27, ChatColor.DARK_GRAY + "Manage Shop");
         addShopSession(player, shop);
 
         // Slot 10: Adjust Buy Price
@@ -338,28 +242,6 @@ public class ShopManager {
         gui.setItem(26, deleteButton);
 
         player.openInventory(gui);
-    }
-
-    private static Map<UUID, List<String>> transactionLogs = new HashMap<>();
-
-    private static void logTransaction(Shop shop, UUID playerId, String type, int amount, double price) {
-        String logEntry = type + " " + amount + " " + shop.getItem().getType() + " for " + price + " by " + Bukkit.getOfflinePlayer(playerId).getName();
-        transactionLogs.computeIfAbsent(shop.getOwner(), k -> new ArrayList<>()).add(logEntry);
-    }
-
-    public static void showTransactionLogs(Player player) {
-        UUID playerId = player.getUniqueId();
-        List<String> logs = transactionLogs.get(playerId);
-
-        if (logs == null || logs.isEmpty()) {
-            player.sendMessage(ChatColor.YELLOW + "No transactions recorded for your shops.");
-            return;
-        }
-
-        player.sendMessage(ChatColor.AQUA + "Transaction Logs:");
-        for (String log : logs) {
-            player.sendMessage(ChatColor.GRAY + log);
-        }
     }
 
     public static void saveShops() {

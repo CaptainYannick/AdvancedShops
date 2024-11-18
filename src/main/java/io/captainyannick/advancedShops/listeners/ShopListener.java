@@ -1,19 +1,17 @@
 package io.captainyannick.advancedShops.listeners;
 
+import io.captainyannick.advancedShops.AdvancedShops;
+import io.captainyannick.advancedShops.core.utils.FormatUtils;
 import io.captainyannick.advancedShops.shop.Shop;
-import io.captainyannick.advancedShops.shop.ShopHologram;
 import io.captainyannick.advancedShops.shop.ShopManager;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
-import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.SignChangeEvent;
-import org.bukkit.event.entity.ItemDespawnEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 
 public class ShopListener implements Listener {
@@ -34,7 +32,11 @@ public class ShopListener implements Listener {
                 if (shop.getOwner().equals(player.getUniqueId()) || shop.getManagers().contains(player.getUniqueId())) {
                     ShopManager.openManagementGUI(player, shop);
                 } else {
-                    ShopManager.openCustomerGUI(player, shop);
+                    if (shop.isEnabled()){
+                        ShopManager.openCustomerGUI(player, shop);
+                    } else {
+                        FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("shop_disabled"), player);
+                    }
                 }
             }
         }
@@ -48,7 +50,11 @@ public class ShopListener implements Listener {
                     if (shop.getOwner().equals(player.getUniqueId()) || shop.getManagers().contains(player.getUniqueId())) {
                         ShopManager.openManagementGUI(player, shop);
                     } else {
-                        ShopManager.openCustomerGUI(player, shop);
+                        if (shop.isEnabled()){
+                            ShopManager.openCustomerGUI(player, shop);
+                        } else {
+                            FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("shop_disabled"), player);
+                        }
                     }
                 }
             }

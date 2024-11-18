@@ -5,6 +5,3 @@ shop_creation_cost: 100.0  # Cost to create a shop
 notifications:
   low_stock_threshold: 5  # Notification threshold for low stock
   stock_disabled: true  # Notify if shop is disabled due to lack of stock
-
-limits:
-  default_max_shops: 3  # Default limit if no specific permission is found

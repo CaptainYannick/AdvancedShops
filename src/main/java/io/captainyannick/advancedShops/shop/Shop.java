@@ -64,4 +64,15 @@ public class Shop {
     public void setSignLocation(Location signLocation) {
         this.signLocation = signLocation;
     }
+
+    public void reduceStock(int amount) {
+        this.stock -= amount;
+        if (this.stock < 0) {
+            this.stock = 0;
+        }
+    }
+
+    public void addStock(int amount) {
+        this.stock += amount;
+    }
 }

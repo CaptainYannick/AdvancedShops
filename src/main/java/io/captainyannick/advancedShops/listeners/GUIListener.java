@@ -2,12 +2,17 @@ package io.captainyannick.advancedShops.listeners;
 
 import io.captainyannick.advancedShops.AdvancedShops;
 import io.captainyannick.advancedShops.core.utils.FormatUtils;
+import io.captainyannick.advancedShops.core.utils.TextUtils;
 import io.captainyannick.advancedShops.shop.PriceAdjustment;
 import io.captainyannick.advancedShops.shop.Shop;
 import io.captainyannick.advancedShops.shop.ShopManager;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.conversations.ConversationContext;
+import org.bukkit.conversations.ConversationFactory;
+import org.bukkit.conversations.NumericPrompt;
+import org.bukkit.conversations.Prompt;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -19,8 +24,12 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 public class GUIListener implements Listener {
+
+    private final Map<Player, ChatPrompt> activePrompts = new HashMap<>();
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
@@ -57,12 +66,11 @@ public class GUIListener implements Listener {
         // Identify the shop based on title
         if (title.startsWith(ChatColor.GREEN + "Shop: ")) {
             handleCustomerGUIClick(event, player, inventory);
-        } else if (title.equals(ChatColor.BLUE + "Manage Shop")) {
+        } else if (title.equals(ChatColor.DARK_GRAY + "Manage Shop")) {
             handleManagementGUIClick(event, player, inventory);
         }
-
-
     }
+
 
     private void handleCustomerGUIClick(InventoryClickEvent event, Player player, Inventory inventory) {
         event.setCancelled(true);
@@ -75,13 +83,33 @@ public class GUIListener implements Listener {
         }
 
         switch (event.getRawSlot()) {
-            case 11: // Buy Item Slot
-                ShopManager.buyFromShop(player, shop);
+            case 11:
+                startChatPrompt(player, shop, "buy");
+                inventory.close();
                 break;
-            case 15: // Sell Item Slot
-                ShopManager.sellToShop(player, shop);
+            case 15:
+                startChatPrompt(player, shop, "sell");
+                inventory.close();
                 break;
         }
+    }
+
+    private void startChatPrompt(Player player, Shop shop, String action) {
+        if (activePrompts.containsKey(player)) {
+            player.sendMessage(ChatColor.RED + "You are already entering an amount.");
+            return;
+        }
+        int maxAmount;
+        if (action.equalsIgnoreCase("buy")) {
+            maxAmount = calculateMaxBuyable(player, shop);
+            player.sendMessage(ChatColor.YELLOW + "You can buy up to " + maxAmount + " items. Enter the amount in the chat, or type 'cancel' to abort.");
+
+        } else {
+            maxAmount = calculateMaxSellable(player, shop);
+            player.sendMessage(ChatColor.YELLOW + "You can sell up to " + maxAmount + " items. Enter the amount in the chat, or type 'cancel' to abort.");
+        }
+        activePrompts.put(player, new ChatPrompt(shop, action, maxAmount));
+
     }
 
     private void handleManagementGUIClick(InventoryClickEvent event, Player player, Inventory inventory) {
@@ -95,23 +123,24 @@ public class GUIListener implements Listener {
         }
 
         switch (event.getRawSlot()) {
-            case 10: // Adjust Buy Price
+            case 10:
                 adjustBuyPrice(player, shop);
                 inventory.close();
                 break;
-            case 12: // Adjust Sell Price
+            case 12:
                 adjustSellPrice(player, shop);
                 inventory.close();
                 break;
             case 14:
                 inventory.close();
                 toggleShopStatus(player, shop);
+                ShopManager.updateShop(shop);
                 break;
-            case 16: // Manage Stock
+            case 16:
                 ShopManager.addToStockEditGui(player, shop);
                 manageStock(player, shop);
                 break;
-            case 26: // Delete Shop
+            case 26:
                 if (shop.getOwner().equals(player.getUniqueId())) {
                     confirmOrDeleteShop(player, shop, event.getCurrentItem());
                 } else {
@@ -122,15 +151,12 @@ public class GUIListener implements Listener {
     }
 
     private void confirmOrDeleteShop(Player player, Shop shop, ItemStack clickedItem) {
-        // Check if the item is already in "Confirm Delete" state
         if (clickedItem != null && clickedItem.getType() == Material.TNT &&
                 clickedItem.getItemMeta().getDisplayName().equals(ChatColor.RED + "Confirm Delete")) {
-            // Second click: Proceed with deletion
             player.sendMessage(ChatColor.GREEN + "Deleting shop...");
-            ShopManager.deleteShop(shop); // Delete the shop and remove associated data
+            ShopManager.deleteShop(shop);
             player.closeInventory();
         } else {
-            // First click: Set item to "Confirm Delete" state
             ItemMeta meta = clickedItem.getItemMeta();
             meta.setDisplayName(ChatColor.RED + "Confirm Delete");
             meta.setLore(Arrays.asList(
@@ -160,7 +186,6 @@ public class GUIListener implements Listener {
                     return;
                 }
 
-                // Update the shop's buy or sell price
                 if (adjustment.isBuyPrice) {
                     adjustment.shop.setBuyPrice(newPrice);
                     player.sendMessage(ChatColor.GREEN + "Buy price updated to " + newPrice);
@@ -169,7 +194,6 @@ public class GUIListener implements Listener {
                     player.sendMessage(ChatColor.GREEN + "Sell price updated to " + newPrice);
                 }
 
-                // Finish the adjustment and refresh the GUI
                 ShopManager.finishPriceAdjustment(player);
                 Bukkit.getScheduler().runTask(AdvancedShops.getInstance(), () -> {
                     ShopManager.openManagementGUI(player, adjustment.shop);
@@ -178,6 +202,48 @@ public class GUIListener implements Listener {
             } catch (NumberFormatException e) {
                 player.sendMessage(ChatColor.RED + "Invalid price. Please enter a valid number.");
             }
+        }
+
+        if (!activePrompts.containsKey(player)) return;
+        event.setCancelled(true);
+
+        ChatPrompt prompt = activePrompts.get(player);
+        String message = event.getMessage();
+
+        if (message.equalsIgnoreCase("cancel")) {
+            player.sendMessage(ChatColor.RED + "Action cancelled.");
+            activePrompts.remove(player);
+            return;
+        }
+
+        try {
+            int amount = Integer.parseInt(message);
+
+            if (amount <= 0) {
+                player.sendMessage(ChatColor.RED + "Please enter a positive number.");
+                return;
+            }
+
+            Bukkit.getScheduler().runTask(AdvancedShops.getInstance(), () -> {
+
+                if (prompt.getAction().equals("buy")) {
+                    if (amount > prompt.getMax()) {
+                        player.sendMessage(ChatColor.RED + "You can't buy that many items. Maximum: " + prompt.getMax());
+                    } else {
+                        performBuy(player, prompt.getShop(), amount);
+                    }
+                } else if (prompt.getAction().equals("sell")) {
+                    if (amount > prompt.getMax()) {
+                        player.sendMessage(ChatColor.RED + "You can't sell that many items. Maximum: " + prompt.getMax());
+                    } else {
+                        performSell(player, prompt.getShop(), amount);
+                    }
+                }
+            });
+
+            activePrompts.remove(player);
+        } catch (NumberFormatException e) {
+            player.sendMessage(ChatColor.RED + "Please enter a valid number.");
         }
     }
 
@@ -207,10 +273,8 @@ public class GUIListener implements Listener {
         Inventory inventory = event.getInventory();
         Shop shop = ShopManager.getActiveShopSession(player);
 
-        // Check if the player was managing stock
         if (ShopManager.getStockInventory(player) == inventory) {
             shop = ShopManager.getToStockEditGui(player);
-            // Count the items in the inventory to determine the new stock
             int newStock = 0;
             for (ItemStack item : inventory.getContents()) {
                 if (item != null && item.isSimilar(shop.getItem())) {
@@ -218,11 +282,9 @@ public class GUIListener implements Listener {
                 }
             }
 
-            // Update the shop's stock
             shop.setStock(newStock);
             player.sendMessage(ChatColor.GREEN + "Stock updated to " + newStock);
 
-            // Remove the stock inventory session
             ShopManager.removeStockInventory(player);
             ShopManager.removeShopSession(player);
             ShopManager.removeStockEditGui(player);
@@ -231,5 +293,149 @@ public class GUIListener implements Listener {
             ShopManager.updateShop(shop);
             ShopManager.removeShopSession(player);
         }
+    }
+
+    private void promptBuyAmount(Player player, Shop shop) {
+        player.sendMessage(ChatColor.GREEN + "Type the number of items you want to buy in the chat (or type 'cancel' to abort).");
+
+        // Start de conversatie
+        new ConversationFactory(AdvancedShops.getInstance())
+                .withFirstPrompt(new NumericPrompt() {
+                    @Override
+                    public String getPromptText(ConversationContext context) {
+                        int maxBuyable = calculateMaxBuyable(player, shop);
+                        return ChatColor.YELLOW + "You can buy up to " + maxBuyable + " items. Enter the amount:";
+                    }
+
+                    @Override
+                    protected Prompt acceptValidatedInput(ConversationContext context, Number input) {
+                        int amount = input.intValue();
+                        int maxBuyable = calculateMaxBuyable(player, shop);
+
+                        if (amount > maxBuyable) {
+                            player.sendMessage(ChatColor.RED + "You can't buy that many items. Maximum: " + maxBuyable);
+                        } else {
+                            performBuy(player, shop, amount);
+                        }
+                        return END_OF_CONVERSATION;
+                    }
+                })
+                .withEscapeSequence("cancel")
+                .withLocalEcho(false)
+                .buildConversation(player)
+                .begin();
+    }
+
+    private void promptSellAmount(Player player, Shop shop) {
+        player.sendMessage(ChatColor.GREEN + "Type the number of items you want to sell in the chat (or type 'cancel' to abort).");
+
+        new ConversationFactory(AdvancedShops.getInstance())
+                .withFirstPrompt(new NumericPrompt() {
+                    @Override
+                    public String getPromptText(ConversationContext context) {
+                        int maxSellable = calculateMaxSellable(player, shop);
+                        return ChatColor.YELLOW + "You can sell up to " + maxSellable + " items. Enter the amount:";
+                    }
+
+                    @Override
+                    protected Prompt acceptValidatedInput(ConversationContext context, Number input) {
+                        int amount = input.intValue();
+                        int maxSellable = calculateMaxSellable(player, shop);
+
+                        if (amount > maxSellable) {
+                            player.sendMessage(ChatColor.RED + "You can't sell that many items. Maximum: " + maxSellable);
+                        } else {
+                            performSell(player, shop, amount);
+                        }
+                        return END_OF_CONVERSATION;
+                    }
+                })
+                .withEscapeSequence("cancel")
+                .withLocalEcho(false)
+                .buildConversation(player)
+                .begin();
+    }
+
+    private int calculateMaxBuyable(Player player, Shop shop) {
+        int stock = shop.getStock();
+        int playerBalance = (int) AdvancedShops.getEconomy().getBalance(player);
+        int maxAffordable = (int) (playerBalance / shop.getBuyPrice());
+
+        int maxStackable = calculateInventorySpace(player, shop.getItem());
+
+        return Math.min(stock, Math.min(maxAffordable, maxStackable));
+    }
+
+    private int calculateMaxSellable(Player player, Shop shop) {
+        int playerItemCount = countItemsInInventory(player, shop.getItem());
+        return playerItemCount;
+    }
+
+    private void performBuy(Player player, Shop shop, int amount) {
+        double totalPrice = amount * shop.getBuyPrice();
+        if (AdvancedShops.getEconomy().withdrawPlayer(player, totalPrice).transactionSuccess()) {
+            shop.reduceStock(amount);
+            addItemToInventory(player, shop.getItem(), amount);
+            player.sendMessage(ChatColor.GREEN + "You bought " + amount + " " + TextUtils.formatItemName(shop.getItem()) + " for " + totalPrice + "!");
+            ShopManager.updateShop(shop);
+        } else {
+            player.sendMessage(ChatColor.RED + "Transaction failed. Not enough money.");
+        }
+    }
+
+    private void performSell(Player player, Shop shop, int amount) {
+        double totalPrice = amount * shop.getSellPrice();
+        shop.addStock(amount);
+        removeItemsFromInventory(player, shop.getItem(), amount);
+        AdvancedShops.getEconomy().depositPlayer(player, totalPrice);
+        player.sendMessage(ChatColor.GREEN + "You sold " + amount + " " + TextUtils.formatItemName(shop.getItem()) + " for " + totalPrice + "!");
+        ShopManager.updateShop(shop);
+    }
+
+    private int calculateInventorySpace(Player player, ItemStack item) {
+        int freeSpace = 0;
+        for (ItemStack invItem : player.getInventory().getStorageContents()) {
+            if (invItem == null || invItem.getType() == Material.AIR) {
+                freeSpace += item.getMaxStackSize(); // Lege sloten
+            } else if (invItem.isSimilar(item)) {
+                freeSpace += item.getMaxStackSize() - invItem.getAmount(); // Vulbare sloten
+            }
+        }
+        return freeSpace;
+    }
+
+    private int countItemsInInventory(Player player, ItemStack item) {
+        int count = 0;
+        for (ItemStack invItem : player.getInventory().getStorageContents()) {
+            if (invItem != null && invItem.isSimilar(item)) {
+                count += invItem.getAmount();
+            }
+        }
+        return count;
+    }
+
+    private void addItemToInventory(Player player, ItemStack item, int amount) {
+        ItemStack clone = item.clone();
+        while (amount > 0) {
+            int stackSize = Math.min(amount, clone.getMaxStackSize());
+            clone.setAmount(stackSize);
+            HashMap<Integer, ItemStack> leftovers = player.getInventory().addItem(clone);
+            if (!leftovers.isEmpty()) {
+                player.getWorld().dropItem(player.getLocation(), leftovers.values().iterator().next());
+            }
+            amount -= stackSize;
+        }
+    }
+
+    private void removeItemsFromInventory(Player player, ItemStack item, int amount) {
+        for (ItemStack invItem : player.getInventory().getStorageContents()) {
+            if (invItem != null && invItem.isSimilar(item)) {
+                int toRemove = Math.min(amount, invItem.getAmount());
+                invItem.setAmount(invItem.getAmount() - toRemove);
+                amount -= toRemove;
+                if (amount <= 0) break;
+            }
+        }
+        player.updateInventory();
     }
 }

@@ -89,7 +89,7 @@ public class GUIListener implements Listener {
 
         Shop shop = ShopManager.getActiveShopSession(player);
 
-        if (shop == null || !shop.getOwner().equals(player.getUniqueId()) || shop.getManagers().contains(player.getUniqueId())) {
+        if (shop == null || !shop.getOwner().equals(player.getUniqueId()) && !shop.getManagers().contains(player.getUniqueId())) {
             player.sendMessage(ChatColor.RED + "You do not have permission to manage this shop.");
             return;
         }

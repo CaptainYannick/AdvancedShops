@@ -1,0 +1,3 @@
+prefix: "&8[&dAdvancedShops&8]"
+incorrect_command: "&7The command you entered does not exist or is spelt incorrectly"
+no_permission: "&7You do not have permission to run this command"

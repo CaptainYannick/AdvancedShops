@@ -1,0 +1,21 @@
+name: AdvancedShops
+version: '2.0.0'
+main: io.captainyannick.advancedShops.AdvancedShops
+api-version: '1.21'
+depend: [Vault]
+commands:
+  shop:
+    description: Main command for Advanced Shops
+    usage: /shop
+permissions:
+  advancedshops.max.*:
+    description: Allows players to create shops until the limit is reached
+  advancedshops.max.unlimited:
+    description: No shop creation limit for the player
+    default: op
+  advancedshops.create:
+    default: op
+    description: Allows staff to update the plugin when there is a new version!
+  advancedshops.admin:
+    default: op
+    description: Access to all admin commands!

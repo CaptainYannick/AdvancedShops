@@ -1,6 +1,7 @@
 package io.captainyannick.advancedShops.shop;
 
 import io.captainyannick.advancedShops.AdvancedShops;
+import io.captainyannick.advancedShops.core.utils.GuiUtils;
 import io.captainyannick.advancedShops.core.utils.TextUtils;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
@@ -193,11 +194,13 @@ public class ShopManager {
         sellItem.setItemMeta(sellMeta);
         gui.setItem(15, sellItem);
 
+        GuiUtils.fillEmptySlots(gui);
+
         player.openInventory(gui);
     }
 
     public static void openManagementGUI(Player player, Shop shop) {
-        Inventory gui = Bukkit.createInventory(null, 27, ChatColor.DARK_GRAY + "Manage Shop");
+        Inventory gui = Bukkit.createInventory(null, 36, ChatColor.DARK_GRAY + "Manage Shop");
         addShopSession(player, shop);
 
         // Slot 10: Adjust Buy Price
@@ -242,6 +245,8 @@ public class ShopManager {
         ));
         deleteButton.setItemMeta(deleteMeta);
         gui.setItem(26, deleteButton);
+
+        GuiUtils.fillEmptySlots(gui);
 
         player.openInventory(gui);
     }

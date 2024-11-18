@@ -115,7 +115,7 @@ public class GUIListener implements Listener {
                 if (shop.getOwner().equals(player.getUniqueId())) {
                     confirmOrDeleteShop(player, shop, event.getCurrentItem());
                 } else {
-                    FormatUtils.sendPrefixedMessage("only_owner_can_delete", player);
+                    FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("only_owner_can_delete"), player);
                 }
                 break;
         }

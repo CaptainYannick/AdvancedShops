@@ -3,3 +3,5 @@ incorrect_command: "&7The command you entered does not exist or is spelt incorre
 no_permission: "&7You do not have permission to run this command"
 only_owner_can_delete: "&7Only the owner of the shop can delete it!"
 shop_disabled: "&7This shop is currently disabled"
+buy_notification: "&7%player% bought &d%amount%x %item% &7for &e%money%&7!"
+sell_notification: "&7%player% sold &d%amount%x %item% &7for &e%money%&7!"

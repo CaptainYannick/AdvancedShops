@@ -9,10 +9,6 @@ import io.captainyannick.advancedShops.shop.ShopManager;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
-import org.bukkit.conversations.ConversationContext;
-import org.bukkit.conversations.ConversationFactory;
-import org.bukkit.conversations.NumericPrompt;
-import org.bukkit.conversations.Prompt;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -295,67 +291,6 @@ public class GUIListener implements Listener {
         }
     }
 
-    private void promptBuyAmount(Player player, Shop shop) {
-        player.sendMessage(ChatColor.GREEN + "Type the number of items you want to buy in the chat (or type 'cancel' to abort).");
-
-        // Start de conversatie
-        new ConversationFactory(AdvancedShops.getInstance())
-                .withFirstPrompt(new NumericPrompt() {
-                    @Override
-                    public String getPromptText(ConversationContext context) {
-                        int maxBuyable = calculateMaxBuyable(player, shop);
-                        return ChatColor.YELLOW + "You can buy up to " + maxBuyable + " items. Enter the amount:";
-                    }
-
-                    @Override
-                    protected Prompt acceptValidatedInput(ConversationContext context, Number input) {
-                        int amount = input.intValue();
-                        int maxBuyable = calculateMaxBuyable(player, shop);
-
-                        if (amount > maxBuyable) {
-                            player.sendMessage(ChatColor.RED + "You can't buy that many items. Maximum: " + maxBuyable);
-                        } else {
-                            performBuy(player, shop, amount);
-                        }
-                        return END_OF_CONVERSATION;
-                    }
-                })
-                .withEscapeSequence("cancel")
-                .withLocalEcho(false)
-                .buildConversation(player)
-                .begin();
-    }
-
-    private void promptSellAmount(Player player, Shop shop) {
-        player.sendMessage(ChatColor.GREEN + "Type the number of items you want to sell in the chat (or type 'cancel' to abort).");
-
-        new ConversationFactory(AdvancedShops.getInstance())
-                .withFirstPrompt(new NumericPrompt() {
-                    @Override
-                    public String getPromptText(ConversationContext context) {
-                        int maxSellable = calculateMaxSellable(player, shop);
-                        return ChatColor.YELLOW + "You can sell up to " + maxSellable + " items. Enter the amount:";
-                    }
-
-                    @Override
-                    protected Prompt acceptValidatedInput(ConversationContext context, Number input) {
-                        int amount = input.intValue();
-                        int maxSellable = calculateMaxSellable(player, shop);
-
-                        if (amount > maxSellable) {
-                            player.sendMessage(ChatColor.RED + "You can't sell that many items. Maximum: " + maxSellable);
-                        } else {
-                            performSell(player, shop, amount);
-                        }
-                        return END_OF_CONVERSATION;
-                    }
-                })
-                .withEscapeSequence("cancel")
-                .withLocalEcho(false)
-                .buildConversation(player)
-                .begin();
-    }
-
     private int calculateMaxBuyable(Player player, Shop shop) {
         int stock = shop.getStock();
         int playerBalance = (int) AdvancedShops.getEconomy().getBalance(player);
@@ -378,6 +313,14 @@ public class GUIListener implements Listener {
             addItemToInventory(player, shop.getItem(), amount);
             player.sendMessage(ChatColor.GREEN + "You bought " + amount + " " + TextUtils.formatItemName(shop.getItem()) + " for " + totalPrice + "!");
             ShopManager.updateShop(shop);
+            Player owner = (Player) Bukkit.getOfflinePlayer(shop.getOwner());
+            if (owner.isOnline()) {
+                FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("buy_notification")
+                        .replaceAll("%player%", player.getName())
+                        .replaceAll("%amount%", String.valueOf(amount))
+                        .replaceAll("%item%", TextUtils.formatItemName(shop.getItem()))
+                        .replaceAll("%money%", String.valueOf(totalPrice)), owner);
+            }
         } else {
             player.sendMessage(ChatColor.RED + "Transaction failed. Not enough money.");
         }
@@ -390,6 +333,14 @@ public class GUIListener implements Listener {
         AdvancedShops.getEconomy().depositPlayer(player, totalPrice);
         player.sendMessage(ChatColor.GREEN + "You sold " + amount + " " + TextUtils.formatItemName(shop.getItem()) + " for " + totalPrice + "!");
         ShopManager.updateShop(shop);
+        Player owner = (Player) Bukkit.getOfflinePlayer(shop.getOwner());
+        if (owner.isOnline()) {
+            FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("sell_notification")
+                    .replaceAll("%player%", player.getName())
+                    .replaceAll("%amount%", String.valueOf(amount))
+                    .replaceAll("%item%", TextUtils.formatItemName(shop.getItem()))
+                    .replaceAll("%money%", String.valueOf(totalPrice)), owner);
+        }
     }
 
     private int calculateInventorySpace(Player player, ItemStack item) {

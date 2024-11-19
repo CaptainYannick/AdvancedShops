@@ -40,7 +40,7 @@ public class GUIListener implements Listener {
             Shop shop = ShopManager.getToStockEditGui(player);
 
             if (shop == null) {
-                player.sendMessage(ChatColor.RED + "Error: Could not retrieve shop data.");
+                FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("could_not_retrieve_shop"), player);
                 return;
             }
 
@@ -55,7 +55,7 @@ public class GUIListener implements Listener {
 
             if (!isCurrentItemValid || !isCursorItemValid) {
                 event.setCancelled(true);
-                player.sendMessage(ChatColor.RED + "You can only add/remove the shop item type.");
+                FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("only_add_shop_item"), player);
             }
         }
 
@@ -73,7 +73,7 @@ public class GUIListener implements Listener {
         Shop shop = ShopManager.getActiveShopSession(player);
 
         if (shop == null) {
-            player.sendMessage(ChatColor.RED + "Shop not found.");
+            FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("shop_not_found"), player);
             return;
         }
 
@@ -103,17 +103,17 @@ public class GUIListener implements Listener {
 
     private void startChatPrompt(Player player, Shop shop, String action) {
         if (activePrompts.containsKey(player)) {
-            player.sendMessage(ChatColor.RED + "You are already entering an amount.");
+            FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("already_entering_amount"), player);
             return;
         }
         int maxAmount;
         if (action.equalsIgnoreCase("buy")) {
             maxAmount = calculateMaxBuyable(player, shop);
-            player.sendMessage(ChatColor.YELLOW + "You can buy up to " + maxAmount + " items. Enter the amount in the chat, or type 'cancel' to abort.");
+            FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("buy").replaceAll("%max_amount%", String.valueOf(maxAmount)), player);
 
         } else {
             maxAmount = calculateMaxSellable(player, shop);
-            player.sendMessage(ChatColor.YELLOW + "You can sell up to " + maxAmount + " items. Enter the amount in the chat, or type 'cancel' to abort.");
+            FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("sell").replaceAll("%max_amount%", String.valueOf(maxAmount)), player);
         }
         activePrompts.put(player, new ChatPrompt(shop, action, maxAmount));
 
@@ -125,7 +125,7 @@ public class GUIListener implements Listener {
         Shop shop = ShopManager.getActiveShopSession(player);
 
         if (shop == null || !shop.getOwner().equals(player.getUniqueId()) && !shop.getManagers().contains(player.getUniqueId())) {
-            player.sendMessage(ChatColor.RED + "You do not have permission to manage this shop.");
+            FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("no_permission_to_manage"), player);
             return;
         }
 
@@ -160,7 +160,6 @@ public class GUIListener implements Listener {
     private void confirmOrDeleteShop(Player player, Shop shop, ItemStack clickedItem) {
         if (clickedItem != null && clickedItem.getType() == Material.TNT &&
                 clickedItem.getItemMeta().getDisplayName().equals(ChatColor.RED + "Confirm Delete")) {
-            player.sendMessage(ChatColor.GREEN + "Deleting shop...");
             ShopManager.deleteShop(shop);
             player.closeInventory();
         } else {
@@ -171,8 +170,7 @@ public class GUIListener implements Listener {
                     ChatColor.GRAY + "This action cannot be undone!"
             ));
             clickedItem.setItemMeta(meta);
-
-            player.sendMessage(ChatColor.YELLOW + "Click the delete button again to confirm.");
+            FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("click_to_confirm"), player);
         }
 
     }
@@ -189,16 +187,16 @@ public class GUIListener implements Listener {
             try {
                 double newPrice = Double.parseDouble(message);
                 if (newPrice < 0) {
-                    player.sendMessage(ChatColor.RED + "Price must be a positive number.");
+                    FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("positive_number"), player);
                     return;
                 }
 
                 if (adjustment.isBuyPrice) {
                     adjustment.shop.setBuyPrice(newPrice);
-                    player.sendMessage(ChatColor.GREEN + "Buy price updated to " + newPrice);
+                    FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("buyprice_updated").replaceAll("%new_price%", String.valueOf(newPrice)), player);
                 } else {
                     adjustment.shop.setSellPrice(newPrice);
-                    player.sendMessage(ChatColor.GREEN + "Sell price updated to " + newPrice);
+                    FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("sellprice_updated").replaceAll("%new_price%", String.valueOf(newPrice)), player);
                 }
 
                 ShopManager.finishPriceAdjustment(player);
@@ -207,7 +205,7 @@ public class GUIListener implements Listener {
                 });
 
             } catch (NumberFormatException e) {
-                player.sendMessage(ChatColor.RED + "Invalid price. Please enter a valid number.");
+                FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("invalid_number"), player);
             }
         }
 
@@ -218,7 +216,7 @@ public class GUIListener implements Listener {
         String message = event.getMessage();
 
         if (message.equalsIgnoreCase("cancel")) {
-            player.sendMessage(ChatColor.RED + "Action cancelled.");
+            FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("cancelled"), player);
             activePrompts.remove(player);
             return;
         }
@@ -227,10 +225,10 @@ public class GUIListener implements Listener {
             int amount = Integer.parseInt(message);
 
             if (amount <= 0) {
-                player.sendMessage(ChatColor.RED + "Please enter a positive number.");
+                FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("positive_number"), player);
                 return;
             }
-
+//TODO VANAF HIER NAAR ONDER PLUGIN MESSAGES
             Bukkit.getScheduler().runTask(AdvancedShops.getInstance(), () -> {
 
                 if (prompt.getAction().equals("buy")) {
@@ -250,7 +248,7 @@ public class GUIListener implements Listener {
 
             activePrompts.remove(player);
         } catch (NumberFormatException e) {
-            player.sendMessage(ChatColor.RED + "Please enter a valid number.");
+            FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("invalid_number"), player);
         }
     }
 
@@ -363,9 +361,9 @@ public class GUIListener implements Listener {
         int freeSpace = 0;
         for (ItemStack invItem : player.getInventory().getStorageContents()) {
             if (invItem == null || invItem.getType() == Material.AIR) {
-                freeSpace += item.getMaxStackSize(); // Lege sloten
+                freeSpace += item.getMaxStackSize();
             } else if (invItem.isSimilar(item)) {
-                freeSpace += item.getMaxStackSize() - invItem.getAmount(); // Vulbare sloten
+                freeSpace += item.getMaxStackSize() - invItem.getAmount();
             }
         }
         return freeSpace;

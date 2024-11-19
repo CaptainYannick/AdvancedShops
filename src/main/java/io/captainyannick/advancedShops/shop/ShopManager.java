@@ -206,32 +206,32 @@ public class ShopManager {
         // Slot 10: Adjust Buy Price
         ItemStack adjustBuy = new ItemStack(Material.GOLD_NUGGET);
         ItemMeta buyMeta = adjustBuy.getItemMeta();
-        buyMeta.setDisplayName(ChatColor.GREEN + "Adjust Buy Price");
-        buyMeta.setLore(Arrays.asList(ChatColor.YELLOW + "Current: " + shop.getBuyPrice()));
+        buyMeta.setDisplayName(TextUtils.formatText("&dAdjust Buy Price"));
+        buyMeta.setLore(Arrays.asList(TextUtils.formatText("&7Current&8: &d" + shop.getBuyPrice()), TextUtils.formatText("&7Set to 0 to disable")));
         adjustBuy.setItemMeta(buyMeta);
         gui.setItem(10, adjustBuy);
 
         // Slot 12: Adjust Sell Price
         ItemStack adjustSell = new ItemStack(Material.IRON_NUGGET);
         ItemMeta sellMeta = adjustSell.getItemMeta();
-        sellMeta.setDisplayName(ChatColor.GREEN + "Adjust Sell Price");
-        sellMeta.setLore(Arrays.asList(ChatColor.YELLOW + "Current: " + shop.getSellPrice()));
+        sellMeta.setDisplayName(TextUtils.formatText("&dAdjust Sell Price"));
+        sellMeta.setLore(Arrays.asList(TextUtils.formatText("&7Current&8: &d" + shop.getSellPrice()), TextUtils.formatText("&7Set to 0 to disable")));
         adjustSell.setItemMeta(sellMeta);
         gui.setItem(12, adjustSell);
 
         // Slot 14: Toggle Enable/Disable
         ItemStack toggle = new ItemStack(Material.LEVER);
         ItemMeta toggleMeta = toggle.getItemMeta();
-        toggleMeta.setDisplayName(ChatColor.GREEN + "Toggle Shop");
-        toggleMeta.setLore(Arrays.asList(ChatColor.YELLOW + "Currently: " + (shop.isEnabled() ? "Enabled" : "Disabled")));
+        toggleMeta.setDisplayName(TextUtils.formatText("&dToggle Shop"));
+        toggleMeta.setLore(Arrays.asList(TextUtils.formatText("&7Current&8: &d" + (shop.isEnabled() ? "Enabled" : "Disabled"))));
         toggle.setItemMeta(toggleMeta);
         gui.setItem(14, toggle);
 
         // Slot 16: Manage Stock
         ItemStack stock = new ItemStack(Material.CHEST);
         ItemMeta stockMeta = stock.getItemMeta();
-        stockMeta.setDisplayName(ChatColor.GREEN + "Manage Stock");
-        stockMeta.setLore(Arrays.asList(ChatColor.YELLOW + "Current Stock: " + shop.getStock()));
+        stockMeta.setDisplayName(TextUtils.formatText("&dManage Stock"));
+        stockMeta.setLore(Arrays.asList(TextUtils.formatText("&7Current stock&8: &d" + shop.getStock())));
         stock.setItemMeta(stockMeta);
         gui.setItem(16, stock);
 
@@ -244,7 +244,7 @@ public class ShopManager {
                 ChatColor.RED + "Warning: This action cannot be undone!"
         ));
         deleteButton.setItemMeta(deleteMeta);
-        gui.setItem(26, deleteButton);
+        gui.setItem(31, deleteButton);
 
         GuiUtils.fillEmptySlots(gui);
 

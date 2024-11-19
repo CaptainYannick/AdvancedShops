@@ -1,5 +1,7 @@
 package io.captainyannick.advancedShops.shop;
 
+import io.captainyannick.advancedShops.AdvancedShops;
+import io.captainyannick.advancedShops.core.utils.FormatUtils;
 import io.captainyannick.advancedShops.core.utils.TextUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -13,20 +15,19 @@ import org.bukkit.entity.Player;
 public class ShopSign {
 
     public static boolean createShopSign(Shop shop, Player player) {
-        Block chestBlock = shop.getLocation().getBlock(); // De chest block
-        BlockFace playerFacing = getPlayerFacingBlock(chestBlock, player); // Welke kant de speler staat
+        Block chestBlock = shop.getLocation().getBlock();
+        BlockFace playerFacing = getPlayerFacingBlock(chestBlock, player);
 
         if (playerFacing == null) {
-            player.sendMessage(ChatColor.RED + "Cannot determine a valid side for the sign.");
+            FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("sign_creation_side"), player);
             Bukkit.getLogger().warning("Player facing is null. Chest location: " + chestBlock.getLocation());
             return false;
         }
 
-        Block signBlock = chestBlock.getRelative(playerFacing); // Het blok naast de chest
+        Block signBlock = chestBlock.getRelative(playerFacing);
 
-        // Controleer of het blok vrij is
         if (!signBlock.getType().isAir() && !signBlock.isReplaceable()) {
-            player.sendMessage(ChatColor.RED + "The space for the sign is obstructed.");
+            FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("sign_creation_obstructed"), player);
             Bukkit.getLogger().warning("Sign block is obstructed. Location: " + signBlock.getLocation());
             return false;
         }
@@ -76,11 +77,9 @@ public class ShopSign {
         Location playerLocation = player.getLocation();
         Location chestLocation = chestBlock.getLocation();
 
-        // Bepaal de relatieve positie van de speler ten opzichte van de chest
         double deltaX = playerLocation.getX() - chestLocation.getX();
         double deltaZ = playerLocation.getZ() - chestLocation.getZ();
 
-        // Kies de dichtstbijzijnde kant
         if (Math.abs(deltaX) > Math.abs(deltaZ)) {
             return deltaX > 0 ? BlockFace.EAST : BlockFace.WEST;
         } else {

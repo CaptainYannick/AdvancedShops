@@ -1,6 +1,7 @@
 package io.captainyannick.advancedShops.shop;
 
 import io.captainyannick.advancedShops.AdvancedShops;
+import io.captainyannick.advancedShops.core.utils.FormatUtils;
 import io.captainyannick.advancedShops.core.utils.GuiUtils;
 import io.captainyannick.advancedShops.core.utils.TextUtils;
 import net.milkbowl.vault.economy.Economy;
@@ -65,40 +66,36 @@ public class ShopManager {
 
     public static void createShop(Player player, String[] args) {
 
-        int maxShops = 1000;//TODO: getMaxShopsForPlayer(player);
-        int playerShopCount = getShopCount(player.getUniqueId());
-        if (playerShopCount >= maxShops) {
-            player.sendMessage(ChatColor.RED + "You have reached your maximum number of shops.");
-            return;
-        }
+//        int maxShops = 1000;//TODO: getMaxShopsForPlayer(player);
+//        int playerShopCount = getShopCount(player.getUniqueId());
+//        if (playerShopCount >= maxShops) {
+//            player.sendMessage(ChatColor.RED + "You have reached your maximum number of shops.");
+//            return;
+//        }
 
         Economy economy = AdvancedShops.getEconomy();
         double creationCost = plugin.getMainConfig().getDouble("shop_creation_cost");
         if (!economy.has(player, creationCost)) {
-            player.sendMessage(ChatColor.RED + "You don't have enough money to create a shop. Cost: " + creationCost);
+            FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("shop_create_no_money")
+                    .replaceAll("%cost%", String.valueOf(creationCost)), player);
             return;
         }
 
         economy.withdrawPlayer(player, creationCost);
         Block block = player.getTargetBlockExact(5);
         if (block == null || !(block.getType() == Material.CHEST || block.getType() == Material.TRAPPED_CHEST || block.getType() == Material.BARREL)) {
-            player.sendMessage(ChatColor.RED + "You must be looking at a chest, trapped chest, or barrel to create a shop.");
+            FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("shop_create_invalid_block"), player);
             return;
         }
 
         if (shops.containsKey(block.getLocation())) {
-            player.sendMessage(ChatColor.RED + "A shop already exists at this location.");
+            FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("shop_create_already_shop"), player);
             return;
         }
 
         ItemStack item = player.getInventory().getItemInMainHand();
         if (item == null || item.getType() == Material.AIR) {
-            player.sendMessage(ChatColor.RED + "You must hold the item you want to sell in your hand.");
-            return;
-        }
-
-        if (args.length < 3) {
-            player.sendMessage(ChatColor.RED + "Usage: /shop create <buyPrice> <sellPrice>");
+            FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("shop_create_hold_item"), player);
             return;
         }
 
@@ -109,7 +106,7 @@ public class ShopManager {
             buyPrice = Double.parseDouble(args[1]);
             sellPrice = Double.parseDouble(args[2]);
         } catch (NumberFormatException e) {
-            player.sendMessage(ChatColor.RED + "Invalid price values.");
+            FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("invalid_number"), player);
             return;
         }
 
@@ -117,10 +114,10 @@ public class ShopManager {
         if (ShopSign.createShopSign(shop, player)) {
             shops.put(block.getLocation(), shop);
             ShopHologram.createFloatingItem(shop);
-            player.sendMessage(ChatColor.GREEN + "Shop created successfully!");
+            FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("shop_create_success"), player);
         } else {
             ShopManager.deleteShop(shop);
-            player.sendMessage(ChatColor.RED + "Shop creation failed!");
+            FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("shop_create_failed"), player);
         }
     }
 
@@ -140,7 +137,7 @@ public class ShopManager {
 
             Player owner = Bukkit.getPlayer(shop.getOwner());
             if (owner != null && owner.isOnline()) {
-                owner.sendMessage(ChatColor.GREEN + "Your shop has been successfully deleted.");
+                FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("shop_deleted_success"), owner);
             }
         }, 5L);
     }

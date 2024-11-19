@@ -147,7 +147,7 @@ public class GUIListener implements Listener {
                 ShopManager.addToStockEditGui(player, shop);
                 manageStock(player, shop);
                 break;
-            case 26:
+            case 31:
                 if (shop.getOwner().equals(player.getUniqueId())) {
                     confirmOrDeleteShop(player, shop, event.getCurrentItem());
                 } else {
@@ -193,10 +193,12 @@ public class GUIListener implements Listener {
 
                 if (adjustment.isBuyPrice) {
                     adjustment.shop.setBuyPrice(newPrice);
-                    FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("buyprice_updated").replaceAll("%new_price%", String.valueOf(newPrice)), player);
+                    FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("buyprice_updated")
+                            .replaceAll("%new_price%", String.valueOf(newPrice)), player);
                 } else {
                     adjustment.shop.setSellPrice(newPrice);
-                    FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("sellprice_updated").replaceAll("%new_price%", String.valueOf(newPrice)), player);
+                    FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("sellprice_updated")
+                            .replaceAll("%new_price%", String.valueOf(newPrice)), player);
                 }
 
                 ShopManager.finishPriceAdjustment(player);
@@ -228,18 +230,20 @@ public class GUIListener implements Listener {
                 FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("positive_number"), player);
                 return;
             }
-//TODO VANAF HIER NAAR ONDER PLUGIN MESSAGES
+
             Bukkit.getScheduler().runTask(AdvancedShops.getInstance(), () -> {
 
                 if (prompt.getAction().equals("buy")) {
                     if (amount > prompt.getMax()) {
-                        player.sendMessage(ChatColor.RED + "You can't buy that many items. Maximum: " + prompt.getMax());
+                        FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("cannot_buy_that_amount")
+                                .replaceAll("%max%", String.valueOf(prompt.getMax())), player);
                     } else {
                         performBuy(player, prompt.getShop(), amount);
                     }
                 } else if (prompt.getAction().equals("sell")) {
                     if (amount > prompt.getMax()) {
-                        player.sendMessage(ChatColor.RED + "You can't sell that many items. Maximum: " + prompt.getMax());
+                        FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("cannot_sell_that_amount")
+                                .replaceAll("%max%", String.valueOf(prompt.getMax())), player);
                     } else {
                         performSell(player, prompt.getShop(), amount);
                     }
@@ -254,21 +258,22 @@ public class GUIListener implements Listener {
 
     private void adjustBuyPrice(Player player, Shop shop) {
         ShopManager.startPriceAdjustment(player, shop, true);
-        player.sendMessage(ChatColor.GREEN + "Enter the new buy price in chat.");
+        FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("prompt_adjust_buy"), player);
     }
 
     private void adjustSellPrice(Player player, Shop shop) {
         ShopManager.startPriceAdjustment(player, shop, false);
-        player.sendMessage(ChatColor.GREEN + "Enter the new sell price in chat.");
+        FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("prompt_adjust_sell"), player);
     }
 
     private void toggleShopStatus(Player player, Shop shop) {
         shop.setEnabled(!shop.isEnabled());
-        player.sendMessage(ChatColor.GREEN + "Shop is now " + (shop.isEnabled() ? "Enabled" : "Disabled"));
+        FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("toggled")
+                .replaceAll("%status%",(shop.isEnabled() ? "Enabled" : "Disabled")), player);
     }
 
     private void manageStock(Player player, Shop shop) {
-        player.sendMessage(ChatColor.GREEN + "To adjust stock, add or remove items to/from the shop’s inventory.");
+        FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("adjust_stock"), player);
         ShopManager.openStockManagementGUI(player, shop);
     }
 
@@ -288,7 +293,8 @@ public class GUIListener implements Listener {
             }
 
             shop.setStock(newStock);
-            player.sendMessage(ChatColor.GREEN + "Stock updated to " + newStock);
+            FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("stock_update")
+                    .replaceAll("%stock%", String.valueOf(newStock)), player);
 
             ShopManager.removeStockInventory(player);
             ShopManager.removeShopSession(player);
@@ -321,7 +327,10 @@ public class GUIListener implements Listener {
             AdvancedShops.getEconomy().depositPlayer(Bukkit.getOfflinePlayer(shop.getOwner()), totalPrice);
             shop.reduceStock(amount);
             addItemToInventory(player, shop.getItem(), amount);
-            player.sendMessage(ChatColor.GREEN + "You bought " + amount + " " + TextUtils.formatItemName(shop.getItem()) + " for " + totalPrice + "!");
+            FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("player_bought")
+                    .replaceAll("%amount%", String.valueOf(amount))
+                    .replaceAll("%item%", TextUtils.formatItemName(shop.getItem()))
+                    .replaceAll("%price%", String.valueOf(totalPrice)), player);
             ShopManager.updateShop(shop);
             Player owner = (Player) Bukkit.getOfflinePlayer(shop.getOwner());
             if (owner.isOnline()) {
@@ -332,7 +341,7 @@ public class GUIListener implements Listener {
                         .replaceAll("%money%", String.valueOf(totalPrice)), owner);
             }
         } else {
-            player.sendMessage(ChatColor.RED + "Transaction failed. Not enough money.");
+            FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("not_enough_money"), player);
         }
     }
 
@@ -342,7 +351,10 @@ public class GUIListener implements Listener {
             shop.addStock(amount);
             removeItemsFromInventory(player, shop.getItem(), amount);
             AdvancedShops.getEconomy().depositPlayer(player, totalPrice);
-            player.sendMessage(ChatColor.GREEN + "You sold " + amount + " " + TextUtils.formatItemName(shop.getItem()) + " for " + totalPrice + "!");
+            FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("player_sold")
+                    .replaceAll("%amount%", String.valueOf(amount))
+                    .replaceAll("%item%", TextUtils.formatItemName(shop.getItem()))
+                    .replaceAll("%price%", String.valueOf(totalPrice)), player);
             ShopManager.updateShop(shop);
             Player owner = (Player) Bukkit.getOfflinePlayer(shop.getOwner());
             if (owner.isOnline()) {
@@ -353,7 +365,7 @@ public class GUIListener implements Listener {
                         .replaceAll("%money%", String.valueOf(totalPrice)), owner);
             }
         } else {
-            player.sendMessage(ChatColor.RED + "Transaction failed. Shop owner does not have enough money.");
+            FormatUtils.sendPrefixedMessage(AdvancedShops.getInstance().getMessageConfig().getString("not_enough_money"), player);
         }
     }
 

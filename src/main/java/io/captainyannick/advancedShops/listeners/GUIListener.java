@@ -59,8 +59,7 @@ public class GUIListener implements Listener {
             }
         }
 
-        // Identify the shop based on title
-        if (title.startsWith(ChatColor.GREEN + "Shop: ")) {
+        if (title.startsWith(ChatColor.DARK_GRAY + "Shop: ")) {
             handleCustomerGUIClick(event, player, inventory);
         } else if (title.equals(ChatColor.DARK_GRAY + "Manage Shop")) {
             handleManagementGUIClick(event, player, inventory);

@@ -167,17 +167,17 @@ public class ShopManager {
     }
 
     public static void openCustomerGUI(Player player, Shop shop) {
-        Inventory gui = Bukkit.createInventory(null, 27, ChatColor.GREEN + "Shop: " + TextUtils.formatItemName(shop.getItem()));
+        Inventory gui = Bukkit.createInventory(null, 27, ChatColor.DARK_GRAY + "Shop: " + TextUtils.formatItemName(shop.getItem()));
         addShopSession(player, shop);
 
         // Slot 11: Buy option
         ItemStack buyItem = new ItemStack(shop.getItem());
         ItemMeta buyMeta = buyItem.getItemMeta();
-        buyMeta.setDisplayName(ChatColor.GREEN + "Buy Item");
+        buyMeta.setDisplayName(TextUtils.formatText("&dBuy Item"));
         if (shop.getBuyPrice() > 0){
-            buyMeta.setLore(Arrays.asList(ChatColor.YELLOW + "Price: " + shop.getBuyPrice()));
+            buyMeta.setLore(Arrays.asList(TextUtils.formatText("&7Price&8: &d" + shop.getBuyPrice())));
         } else {
-            buyMeta.setLore(Arrays.asList(ChatColor.RED + "Buying disabled"));
+            buyMeta.setLore(Arrays.asList(TextUtils.formatText("&cBuying disabled")));
         }
         buyItem.setItemMeta(buyMeta);
         gui.setItem(11, buyItem);
@@ -185,11 +185,11 @@ public class ShopManager {
         // Slot 15: Sell option
         ItemStack sellItem = new ItemStack(shop.getItem());
         ItemMeta sellMeta = sellItem.getItemMeta();
-        sellMeta.setDisplayName(ChatColor.RED + "Sell Item");
+        sellMeta.setDisplayName(TextUtils.formatText("&dSell Item"));
         if (shop.getSellPrice() > 0){
-            sellMeta.setLore(Arrays.asList(ChatColor.YELLOW + "Price: " + shop.getSellPrice()));
+            sellMeta.setLore(Arrays.asList(TextUtils.formatText("&7Price&8: &d" + shop.getSellPrice())));
         } else {
-            sellMeta.setLore(Arrays.asList(ChatColor.RED + "Selling disabled"));
+            sellMeta.setLore(Arrays.asList(TextUtils.formatText("&cSelling disabled")));
         }
         sellItem.setItemMeta(sellMeta);
         gui.setItem(15, sellItem);

@@ -293,6 +293,7 @@ public class ShopManager {
             for (String uuid : managers) {
                 shop.addManager(UUID.fromString(uuid));
             }
+            ShopHologram.removeAllFloatingItems(shop);
             ShopHologram.updateFloatingItem(shop);
 
             shops.put(loc, shop);

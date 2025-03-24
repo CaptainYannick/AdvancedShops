@@ -48,4 +48,15 @@ public class ShopHologram {
         removeFloatingItem(shop);
         createFloatingItem(shop);
     }
+
+    public static void removeAllFloatingItems(Shop shop) {
+        Location location = shop.getLocation().clone().add(0.5, 1, 0.5);
+        floatingItems.remove(shop);
+
+        location.getWorld().getNearbyEntities(location, 1, 1, 1).stream()
+                .filter(entity -> entity instanceof Item)
+                .map(entity -> (Item) entity)
+                .forEach(Item::remove);
+
+    }
 }
